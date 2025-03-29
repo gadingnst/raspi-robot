@@ -1,7 +1,7 @@
+import os
 import pyaudio
 import wave
 import requests
-import pygame
 import speech_recognition as sr
 import io
 import urllib.parse
@@ -82,19 +82,10 @@ def send_audio_to_api(audio_data):
     return None
 
 def play_audio(audio_data):
-  """Memainkan audio MP3 yang diterima dari API menggunakan pygame"""
-  pygame.mixer.init()
-  mp3_buffer = io.BytesIO(audio_data)
-
-  # Simpan sementara ke file
+  """Memainkan audio MP3 dengan mpg123"""
   with open("temp_audio.mp3", "wb") as f:
-    f.write(mp3_buffer.getvalue())
-
-  pygame.mixer.music.load("temp_audio.mp3")
-  pygame.mixer.music.play()
-
-  while pygame.mixer.music.get_busy():
-    pygame.time.Clock().tick(10)
+    f.write(audio_data)
+  os.system("mpg123 -q temp_audio.mp3")
 
 def listen_mode():
   """Tetap dalam mode listen hingga tidak ada suara balasan"""
