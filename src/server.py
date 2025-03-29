@@ -4,14 +4,30 @@ import requests
 import pygame
 import speech_recognition as sr
 import io
+import urllib.parse
 
 # Konfigurasi API
 BASE_URL = "http://192.168.3.1:3000"
 SPEECH_TO_SPEECH_API = f"{BASE_URL}/api/speech-to-speech/generate?key=gadingnst&format="
 TEXT_TO_SPEECH_API = f"{BASE_URL}/api/text-to-speech/generate?key=gadingnst"
-WAKE_WORD = "alecto"
+WAKE_WORD = "alexa"
 
 SAMPLE_RATE = 48000  # Gunakan 48000 Hz
+
+def log_ai_headers(response):
+  """Menampilkan header AI-Text-Request dan AI-Text-Response jika tersedia"""
+  request_text = response.headers.get("AI-Text-Request", "N/A")
+  response_text = response.headers.get("AI-Text-Response", "N/A")
+
+  # Decode URI jika header tidak kosong
+  request_text = urllib.parse.unquote(request_text) if request_text != "N/A" else "N/A"
+  response_text = urllib.parse.unquote(response_text) if response_text != "N/A" else "N/A"
+
+  # Only log if the text is not "N/A"
+  if request_text != "N/A":
+    print(f"📥 AI-Text-Request: {request_text}")
+  if response_text != "N/A":
+    print(f"📤 AI-Text-Response: {response_text}")
 
 def send_text_to_speech(text):
   """Mengirim teks ke API TTS dan menerima respon audio MP3"""
@@ -22,6 +38,7 @@ def send_text_to_speech(text):
 
   if response.status_code == 200:
     print("✅ Received response audio from TTS!")
+    log_ai_headers(response)  # Log header AI
     return response.content  # Kembalikan audio MP3 dari API
   else:
     print("❌ Error:", response.status_code, response.text)
@@ -36,7 +53,7 @@ def record_dynamic_audio():
   with mic as source:
     recognizer.adjust_for_ambient_noise(source)
     try:
-      audio = recognizer.listen(source, timeout=10, phrase_time_limit=5)
+      audio = recognizer.listen(source, timeout=10, phrase_time_limit=3)
     except sr.WaitTimeoutError:
       print("⏳ No response detected, returning to standby mode...")
       return None
@@ -58,6 +75,7 @@ def send_audio_to_api(audio_data):
 
   if response.status_code == 200:
     print("✅ Received response audio!")
+    log_ai_headers(response)  # Log header AI
     return response.content  # Kembalikan audio MP3 dari API
   else:
     print("❌ Error:", response.status_code, response.text)
